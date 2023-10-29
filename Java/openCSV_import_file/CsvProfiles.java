@@ -1,4 +1,4 @@
-package com.example.folder_sans_rapport.importFileOpenCsv;
+package com.example;
 
 public class CsvProfiles {
     public static final String profile1 = "profile1";
