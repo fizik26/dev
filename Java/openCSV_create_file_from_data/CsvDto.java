@@ -1,5 +1,3 @@
-package com.example.folder_sans_rapport.createCsvViaData;
-
 import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvIgnore;
 import com.opencsv.bean.CsvBindByNames;
