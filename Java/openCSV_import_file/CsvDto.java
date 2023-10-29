@@ -1,4 +1,4 @@
-package com.example.folder_sans_rapport.importFileOpenCsv;
+package com.example;
 
 import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvIgnore;
