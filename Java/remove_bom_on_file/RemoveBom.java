@@ -4,7 +4,7 @@ import java.io.InputStream;
 
 import org.springframework.web.multipart.MultipartFile;
 
-public class removeBom {
+public class RemoveBom {
 
     public InputStream removeBomMethod(MultipartFile file) throws IOException {
         if (isContainBOM(file)) {
