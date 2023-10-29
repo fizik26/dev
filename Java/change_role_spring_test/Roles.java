@@ -1,4 +1,4 @@
-package com.example.folder_sans_rapport.changeUserRoleOnAUnitTest;
+package com.example;
 
 public enum Roles {
     ROLE_1("role_1"),
