@@ -1,5 +1,3 @@
-package com.example.folder_sans_rapport.createCsvViaData;
-
 public class CsvProfiles {
     public static final String profile1 = "profile1";
     public static final String profile2 = "profile2";
