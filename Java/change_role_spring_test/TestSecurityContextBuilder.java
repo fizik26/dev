@@ -1,4 +1,4 @@
-package com.example.folder_sans_rapport.changeUserRoleOnAUnitTest;
+package com.example;
 
 import java.util.ArrayList;
 import java.util.List;
