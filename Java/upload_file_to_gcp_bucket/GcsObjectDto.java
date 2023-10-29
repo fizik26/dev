@@ -1,5 +1,3 @@
-package com.example.folder_sans_rapport.exportToGcp;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
