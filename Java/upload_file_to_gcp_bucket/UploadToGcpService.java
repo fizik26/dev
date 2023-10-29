@@ -1,5 +1,3 @@
-package com.example.folder_sans_rapport.exportToGcp;
-
 import java.nio.charset.StandardCharsets;
 
 import org.springframework.stereotype.Service;
