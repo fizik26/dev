@@ -1,0 +1,725 @@
+openapi: 3.0.1
+info:
+  title: "Documentation de l'API"
+  description: |-
+    Cette documentation basée sur OpenApi est le contrat de service de l'API
+  version: "v1"
+  contact:
+    name: "DiGiTAL API Team"
+    email: "test@est.fr.fr"
+servers:
+  - description: Api
+    url: /v1
+paths:
+
+  /users/recherche:
+    get:
+      tags:
+        - user
+      summary: Chercher les users qui correspondent aux critéres de recherche
+      description: Retourne une page de users
+      operationId: getUsersByFilter
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/Nom"
+        - $ref: "#/components/parameters/Prenom"
+        - $ref: "#/components/parameters/DateNaissance"
+        - $ref: "#/components/parameters/PageNoQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - $ref: "#/components/parameters/SortByQuery"
+        - $ref: "#/components/parameters/SortDirectionQuery"
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageUsers'
+        '400':
+          description: Paramètres de recherche invalide
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '500':
+          description: Erreur serveur
+
+  /players/{numeroJoueur}:
+    get:
+      tags:
+        - player
+      summary: Cherche les infos d'un player par son numéro de joueur
+      description: Retourne un player et ses dépendences
+      operationId: getAdherentByNumeroJoueur
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/NumeroJoueur"
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '400':
+          description: Numéro Joueur invalide
+        '404':
+          description: Player non trouvé
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '500':
+          description: Erreur serveur
+
+  /players/{numeroJoueur}/situation:
+    get:
+      tags:
+        - player
+      summary: Cherche la situation d'un player par son numéro joueur
+      description: Retourne la situation d'un player
+      operationId: getPlayerSituationByNumeroJoueur
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/NumeroJoueur"
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Situation'
+        '400':
+          description: Numéro Joueur invalide
+        '404':
+          description: Player non trouvé
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '500':
+          description: Erreur serveur
+
+  /players/{numeroJoueur}/resultats:
+    post:
+      tags:
+        - player
+      summary: Ajoute un resultat à un player
+      description: Retourne le resultat ajouté
+      operationId: addResultatByNumeroJoueur
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/NumeroJoueur"
+      requestBody:
+        description: Resultat à ajouter
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resultat'
+        required: true
+      responses:
+        '201':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resultat'
+        '400':
+          description: Numéro Joueur invalide
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '500':
+          description:
+            Erreur serveur
+    put:
+      tags:
+        - player
+      summary: Mets à jour une liste de resultats liés à un player
+      description: Retourne la liste de resultats du player
+      operationId: updateListResultatByNumeroJoueur
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/NumeroJoueur"
+      requestBody:
+        description: Resultats à mettre à jour
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Resultat'
+        required: true
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resultat'
+        '400':
+          description: Numéro Joueur invalide
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '500':
+          description: Erreur serveur
+
+  /players/{numeroJoueur}/resultats/{idResultat}:
+    delete:
+      tags:
+        - player
+      summary: Suppression d'un resultat
+      description: Supprime un résultat spécifique
+      operationId: deleteResultatByNumeroJoueur
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/NumeroJoueur"
+        - $ref: "#/components/parameters/IdResultat"
+      responses:
+        '204':
+          description: Opération réussie
+        '400':
+          description: Numéro Joueur invalide
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '404':
+          description: Resultat non trouvée
+        '500':
+          description: Erreur serveur
+    put:
+      tags:
+        - player
+      summary: Mets à jour un resultat
+      description: Retourne le resultat mis à jour
+      operationId: updateResultatByNumeroJoueur
+      parameters:
+        - $ref: '#/components/parameters/TypeUserId'
+        - $ref: "#/components/parameters/NumeroJoueur"
+        - $ref: "#/components/parameters/IdResultat"
+      requestBody:
+        description: Resultat à mettre à jour
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resultat'
+        required: true
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resultat'
+        '400':
+          description: Numéro Joueur invalide
+        '401':
+          description: Non autorisé
+        '403':
+          description: Interdit
+        '404':
+          description: Resultat non trouvée
+        '500':
+          description: Erreur serveur
+
+  /types/resultat:
+    get:
+      tags:
+        - types
+      summary: Récupère l'ensemble des types de resultat
+      description: Retourne la liste des types de resultat
+      operationId: getCodesTypesResultat
+      responses:
+        '200':
+          description: Opération réussie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          description: Non autorisé
+        '500':
+          description: Erreur serveur
+
+components:
+  parameters:
+    TypeUserId:
+      description: Identifiant du type de joueur sur lequel récupérer les données
+      name: TypeUserId
+      in: header
+      schema:
+        type: integer
+        format: int64
+        example: 2
+
+    IdResultat:
+      name: idResultat
+      in: path
+      description: Id technique du resultat
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: f3b41339-0f8a-409c-99ca-b7e69cb4adf1
+
+    Nom:
+      name: nom
+      in: query
+      required: false
+      schema:
+        type: string
+        example: 'SOUCA'
+
+    Prenom:
+      name: prenom
+      in: query
+      required: false
+      schema:
+        type: string
+        example: 'Audrey'
+
+    DateNaissance:
+      name: dateNaissance
+      in: query
+      schema:
+        type: string
+        format: date
+        example: "1998-10-22"
+
+    NumeroJoueur:
+      name: numeroJoueur
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 8
+        example: '89562512'
+
+    PageSizeQuery:
+      name: pageSize
+      in: query
+      description: Nombre de users par page
+      schema:
+        type: integer
+        default: 10
+        example: 10
+
+    SortByQuery:
+      name: sortBy
+      in: query
+      description: tri par attribut
+      schema:
+        type: string
+        default: "nom"
+        example: 'nom'
+
+    SortDirectionQuery:
+      name: sortDirection
+      in: query
+      description: direction du tri
+      schema:
+        $ref: "#/components/schemas/SortDirection"
+
+    PageNoQuery:
+      name: pageNo
+      in: query
+      description: Numéro de la page demandée
+      schema:
+        type: integer
+        default: 0
+        example: 0
+
+  schemas:
+    User:
+      required:
+        - nom
+        - prenom
+        - sexe
+        - dateNaissance
+        - numeroJoueur
+        - statut
+        - adresse
+      type: object
+      properties:
+        nom:
+          type: string
+          nullable: false
+          example: 'SOUCA'
+        prenom:
+          type: string
+          nullable: false
+          example: 'Audrey'
+        sexe:
+          type: string
+          description: Sexe du user
+          nullable: false
+          example: 'FEMME'
+          enum:
+            - HOMME
+            - FEMME
+        dateNaissance:
+          type: string
+          format: date
+          example: "1987-12-02"
+          description: Date de naissance
+          nullable: false
+        numeroJoueur:
+          type: string
+          minLength: 8
+          nullable: false
+          description: Numéro unique du joueur
+          example: '89562512'
+        statut:
+          type: string
+          description: Statut de l'user
+          nullable: false
+          example: 'ADHERENT'
+          enum:
+            - ADHERENT
+            - SORTIE
+            - REFUS
+            - INCONNU
+        adresse:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Adresse'
+
+    Adresse:
+      required:
+        - numeroRue
+        - nomRue
+        - codePostal
+        - ville
+        - pays
+      type: object
+      properties:
+        numeroRue:
+          type: string
+          maxLength: 250
+          example: 156
+        nomRue:
+          type: string
+          maxLength: 250
+          example: 'avenue Maréchal Joffre'
+        codePostal:
+          type: string
+          example: '69160'
+          minLength: 5
+          maxLength: 5
+        departement:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: '691'
+        ville:
+          type: string
+          maxLength: 250
+          example: 'Villeurbanne'
+        typeVoie:
+          type: string
+          example: 'Rue'
+        complNumeroRue:
+          type: string
+          example: 'Residence B'
+        complAdresse:
+          type: string
+          example: 'Residence B 157'
+
+    Player:
+      required:
+        - dateAdhesion
+        - dateFinAdhesion
+        - communication
+      type: object
+      properties:
+        dateAdhesion:
+          type: string
+          format: date-time
+          example: '2016-01-01'
+          description: Date d'adhesion
+        dateFinAdhesion:
+          type: string
+          format: date-time
+          example: '2024-02-25'
+          description: Date de fin d'adhesion
+        communication:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Communication'
+
+    Communication:
+      type: object
+      properties:
+        courrier:
+          type: boolean
+          description: Canal de contact du player par telephone accepté ou non
+          example: true
+        mail:
+          type: boolean
+          description: Canal de contact du player par telephone accepté ou non
+          example: false
+        telephone:
+          type: boolean
+          description: Canal de contact du player par telephone accepté ou non
+          example: true
+
+    PageUsers:
+      description: Page de users
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            content:
+              items:
+                $ref: "#/components/schemas/User"
+
+    SortDirection:
+      type: string
+      enum:
+        - ASC
+        - DESC
+      example: 'ASC'
+
+    Situation:
+      required:
+        - pathologie
+        - mesuresCorporelles
+        - styleDeVie
+      type: object
+      properties:
+        pathologie:
+          allOf:
+            - $ref: '#/components/schemas/Pathologie'
+        mesuresCorporelles:
+          allOf:
+            - $ref: '#/components/schemas/MesuresCorporelles'
+        styleDeVie:
+          allOf:
+            - $ref: '#/components/schemas/StyleDeVie'
+
+    Pathologie:
+      required:
+        - diabete
+        - ic
+      type: object
+      properties:
+        diabete:
+          allOf:
+            - $ref: '#/components/schemas/Diabete'
+        ic:
+          allOf:
+            - $ref: '#/components/schemas/Ic'
+
+    Diabete:
+      type: object
+      properties:
+        value:
+          type: boolean
+          description: Le player souffre ou non de diabète
+          example: true
+          nullable: true
+        type_1:
+          type: boolean
+          description: Le player est atteint ou non d'un diabète de type 1
+          example: false
+          nullable: true
+        type_2:
+          type: boolean
+          description: Le player est atteint ou non d'un diabète de type 2
+          example: true
+          nullable: true
+        autreDiabete:
+          type: string
+          maxLength: 100
+          example: 'Diabète gestationnel'
+          description: Autre type de diabète dont pourrait être atteint le player
+          nullable: true
+        insulinoTraite:
+          type: boolean
+          description: Le player est-t-il insulino-traité ?
+          example: false
+          nullable: true
+        dateApparitionDiabete:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date d'apparition du diabète
+          nullable: true
+
+    Ic:
+      type: object
+      properties:
+        value:
+          type: boolean
+          description: Le player est-il atteint d'insuffisance cardiaque ?
+          example: true
+          nullable: true
+        dateApparitionIC:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date d'apparition de l'insuffisance cardiaque
+          nullable: true
+
+    MesuresCorporelles:
+      type: object
+      properties:
+        taille:
+          type: integer
+          example: 190
+          minimum: 0
+          maximum: 300
+          description: Taille de l'player
+          nullable: true
+        poids:
+          type: integer
+          example: 88
+          minimum: 0
+          description: Poids de l'player
+          nullable: true
+        dateVerificationMesures:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date de vérification sur les mesures, taille et poids, de l'player
+          nullable: true
+
+    StyleDeVie:
+      required:
+        - fumeur
+        - activitePhysique
+        - consommationAlcool
+      type: object
+      properties:
+        fumeur:
+          allOf:
+            - $ref: '#/components/schemas/Fumeur'
+        activitePhysique:
+          allOf:
+            - $ref: '#/components/schemas/ActivitePhysique'
+        consommationAlcool:
+          allOf:
+            - $ref: '#/components/schemas/ConsommationAlcool'
+
+    Fumeur:
+      type: object
+      properties:
+        value:
+          description: Type de fumeur
+          allOf:
+            - $ref: '#/components/schemas/FumeurType'
+        dateVerificationFumeur:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date de vérification sur la fréquence du player à fumer
+          nullable: true
+
+    ActivitePhysique:
+      type: object
+      properties:
+        value:
+          description: Fréquence d'activité physique
+          allOf:
+            - $ref: '#/components/schemas/ActivitePhysiqueType'
+        dateVerificationActivitePhysique:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date de vérification sur la fréquence d'activité physique
+          nullable: true
+
+    ConsommationAlcool:
+      type: object
+      properties:
+        value:
+          description: Fréquence de consommation d'alcool
+          allOf:
+            - $ref: '#/components/schemas/ConsommationAlcoolType'
+        dateVerificationConsommationAlcool:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date de vérification sur la fréquence de consommation d'alcool
+          nullable: true
+
+    FumeurType:
+      type: string
+      enum:
+        - OUI_TOUS_LES_JOURS
+        - OUI_OCCASIONNELLEMENT
+        - NON_ARRET_RECENT
+        - NON_ARRET_ANCIEN
+        - NON
+
+    ActivitePhysiqueType:
+      type: string
+      enum:
+        - OUI_CHAQUE_JOUR
+        - OUI_5_FOIS_MINIMUM
+        - OUI_1_A_4_FOIS
+        - NON_TRES_PEU
+        - NON_JAMAIS
+
+    ConsommationAlcoolType:
+      type: string
+      enum:
+        - TOUS_LES_JOURS
+        - PLUS_2_VERRES_JOUR
+        - PLUS_10_VERRES_JOUR
+        - PLUS_4_VERRES_MEME_OCCASION
+        - AUTRE
+
+    Resultat:
+      required:
+        - codeType
+        - date
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: f3b41339-0f8a-409c-99ca-b7e69cb4adf1
+          nullable: false
+        codeType:
+          type: string
+          maxLength: 50
+          description: code du type de le resultat
+          example: 'URGENCES'
+        precisions:
+          type: string
+          maxLength: 100
+          description: Précisions sur le resultat
+          nullable: true
+        date:
+          type: string
+          format: date
+          example: '2024-02-25'
+          description: Date de le resultat
+          nullable: true
+
+    Page:
+      type: object
+      required:
+        - totalElements
+        - totalPages
+        - content
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          nullable: true
+        content:
+          type: array
+          items: { }

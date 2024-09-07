@@ -1,0 +1,1 @@
+Exemple d'utilisation d'un décorateur avec MapStruct permettant d'injecter un Service utilisé dans le mapper
