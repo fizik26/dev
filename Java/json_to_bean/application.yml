@@ -1,0 +1,2 @@
+json:
+    voitures: "classpath:json/voitures.json"
