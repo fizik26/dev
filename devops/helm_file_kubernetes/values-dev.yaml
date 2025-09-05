@@ -1,0 +1,267 @@
+# this is a helm file ( so a package manager for Kubernetes )
+# in this example this chart allow to use a signle pod as frontend and multiple pods as backend modules
+
+# Global Configuration for all components
+labels:
+  env: dev
+
+imagePullSecrets: []
+
+
+# Configuration related to APIs Components
+# this chart allown to deploy multiple API components in the cluster. Every component must be defined as an item of the array "apis"
+#If you have multiple apis, please copy/paste the first item ( api + init container ) in the apis array
+apis:
+  - name: my-api
+    replicaCount: 1
+    image:
+      repository: xxxx/myApp/myApp-api
+      tag: 1.0.0
+      pullPolicy: always
+
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2048Mi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+    livenessProbe:
+      httpGet:
+        path: /actuator/health # return 200
+        port: 8080
+      initialDelaySeconds: 120 # how long to wait before checking https://itnext.io/kubernetes-readiness-probe-83f8a06d33d3
+      periodSeconds: 3 # how long to wait between checks
+      successThreshold: 1 # how many successes to hit before accepting
+      failureThreshold: 5 # how many failures to accept before failing
+      timeoutSeconds: 5 # how long to wait for a response
+
+    readinessProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8080
+      initialDelaySeconds: 120 # how long to wait before checking https://itnext.io/kubernetes-readiness-probe-83f8a06d33d3
+      periodSeconds: 3 # how long to wait between checks
+      successThreshold: 1 # how many successes to hit before accepting
+      failureThreshold: 5 # how many failures to accept before failing
+      timeoutSeconds: 5 # how long to wait for a response 
+
+    strategy: {}
+    # type: RollingUpdate
+    # rollingUpdate:
+    # maxSurge: 0
+    # maxUnavailable: 1
+
+    nodeSelector: {}
+
+    tolerations: []
+
+    affinity: {}
+
+    # Api Environment Variables, here you can declare in clear some variables
+    fromEnv:
+      envVars:
+        - name: HTTP_PROXY
+          value: http/myProxy
+        - name: DB_NAME
+          value: beautiful_database
+        
+    # API ConfigMap Variables
+    fromConfigMap:
+      envVars: []
+
+    # Api Environment Variables from Secrets, here get the variables from Kubernetes Secrets
+    fromSecret:
+      envVars:
+        - secretName: app-secret-credentials
+          name: APP_CREDENTIALS
+          key: credentials.json
+        - secretName: sql-db-credentials   # name of the secret on Kubernetes Secret
+          name: DB_USER                   # variable name used in our application
+          key: username                   # name of the variable that we want from the secretName
+        - secretName: sql-db-credentials
+          name: DB_PASSWORD
+          key: password
+
+    # Database parameters
+    db:
+      # type can be cloudsql or standalone
+      type: cloudsql
+      cloudsql-image: gcr.io/cloudsql-docker/gce-proxy:1.17-alpine
+      cloudsql-iptype: PRIVATE
+      instance: XXXXXXXXXXXXXXXXxx
+      fromEnv:
+        envVars:
+          - name: HTTP_PROXY
+            value: XXXXXXXXXXXXX
+      resources:
+        limits:
+          cpu: 300m
+          memory: 256Mi
+        requests:
+          cpu: 200m
+          memory: 128Mi
+
+    # Volumes Configuration
+    volumes:
+      mountVolumes:
+        fromSecret: []
+        # - name: secret1
+        #   CredentialsSecretName: test1
+        #   mountPath: /secrets/secret
+        #   readOnly: false # Update readOnly to true if you don't need write permission
+
+        fromConfigMap: []
+        # - name: config1
+        #   # Provide the name of the ConfigMap containing the files you want
+        #   # to add to the container
+        #   configMapName: test2
+        #   mountPath: /secrets/config
+        #   readOnly: false # Update readOnly to true if you don't need write permission
+
+        fromPVC: []
+        # - name: pvc1
+        #   PVCName: test3
+        #   mountPath: /secrets/pvc
+        #   readOnly: false # Update readOnly to true if you don't need write permission
+
+    # Api Service parameters
+    service:
+      type: ClusterIP
+      port: 8080
+      targetport: 8080
+
+    # Api Ingress parameters
+    legacy_ingress: true
+    ingress:
+      enabled: true
+      # Mod_security for API Ingress
+      waf:
+        engine: "DetectionOnly"  # Possible values (On, DetectionOnly)
+      annotations:
+        kubernetes.io/ingress.class: nginx-external
+      path: /
+      hosts:
+        - XXXXXXXXXx
+      tls:
+        - secretName: XXXXXXXXXXXXXXXXx
+          hosts:
+            XXXXXXXXXXXXXXXXXXX
+
+# Configuration of Front App Component
+app:
+  name: my-app
+  # you must active this option if you have an app component
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: XXXXXXXXXXXXXXXXXxx
+    tag: 1.0.0
+    pullPolicy: Always
+
+  resources:
+      limits:
+        cpu: 500m
+        memory: 1024Mi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+    livenessProbe:
+      httpGet:
+        path: /health-check # return 200
+        port: 80
+      initialDelaySeconds: 60 # how long to wait before checking https://itnext.io/kubernetes-readiness-probe-83f8a06d33d3
+      periodSeconds: 3 # how long to wait between checks
+      successThreshold: 1 # how many successes to hit before accepting
+      failureThreshold: 5 # how many failures to accept before failing
+      timeoutSeconds: 5 # how long to wait for a response
+
+    readinessProbe:
+      httpGet:
+        path: /health-check
+        port: 80
+      initialDelaySeconds: 60 # how long to wait before checking https://itnext.io/kubernetes-readiness-probe-83f8a06d33d3
+      periodSeconds: 3 # how long to wait between checks
+      successThreshold: 1 # how many successes to hit before accepting
+      failureThreshold: 5 # how many failures to accept before failing
+      timeoutSeconds: 5 # how long to wait for a response 
+
+    strategy: {}
+    # type: RollingUpdate
+    # rollingUpdate:
+    # maxSurge: 0
+    # maxUnavailable: 1
+
+    nodeSelector: {}
+
+    tolerations: []
+
+    affinity: {}
+
+    # App Environment Variables, here you can declare in clear some variables
+    fromEnv:
+      envVars:
+        - secretName: app-secret-credentials
+          name: APP_CREDENTIALS
+          key: credentials.json
+
+    # APP ConfigMap Variables
+    fromConfigMap:
+      envVars: []
+
+    # App Environment Variables from Secrets, here get the variables from Kubernetes Secrets
+    fromSecret:
+      envVars:
+        - secretName: app-secret-credentials
+          name: APP_CREDENTIALS
+          key: credentials.json
+
+    # Volumes Configuration
+    volumes:
+      mountVolumes:
+        fromSecret: []
+        # - name: secret1
+        #   CredentialsSecretName: test1
+        #   mountPath: /secrets/secret
+        #   readOnly: false # Update readOnly to true if you don't need write permission
+
+        fromConfigMap: []
+        # - name: config1
+        #   # Provide the name of the ConfigMap containing the files you want
+        #   # to add to the container
+        #   configMapName: test2
+        #   mountPath: /secrets/config
+        #   readOnly: false # Update readOnly to true if you don't need write permission
+
+        fromPVC: []
+        # - name: pvc1
+        #   PVCName: test3
+        #   mountPath: /secrets/pvc
+        #   readOnly: false # Update readOnly to true if you don't need write permission
+
+    # Api Service parameters
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+      targetport: 80
+
+    # Api Ingress parameters
+    legacy_ingress: true
+    ingress:
+      enabled: true
+      # Mod_security for API Ingress
+      waf:
+        engine: "DetectionOnly"  # Possible values (On, DetectionOnly)
+      annotations:
+        kubernetes.io/ingress.class: nginx-external
+
+      path: /
+      hosts:
+        - XXXXXXXXXx
+      tls:
+        - secretName: XXXXXXXXXXXXXXXX
+          hosts:
+            - XXXXXXXXXXXXXXXXxx
