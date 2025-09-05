@@ -1,0 +1,280 @@
+#example of gitlab ci file for a project on Google Cloud Platform
+
+variables:
+  # declare multiple variables that will be used in this file
+  IMAGE_NAME: "myApp"
+  MAVEN_IMAGE_VERSION: "3.8.5-openjdk-17-slim"
+  APP_IMAGE_TEST: "weboaks/node-karma-protractor-chrome:latest"
+  SONAR_DOCKER_IMAGE: "sonarsource/sonar-scanner-cli:4.6"
+  AR_DOCKER_REGISTRY_DEV: europe-docker.pkg.dev/xxxxxxxxxxxxxxxxxx
+  AR_DOCKER_REGISTRY_PROD: europe-docker.pkg.dev/xxxxxxxxxxxxxxxxxx
+  AR_DOCKER_IMAGE_PREFIX: docker-XXX-XXXX/XXX
+  APP_IMAGE_BUILD: "node:16-alpine"
+  VERSION: "1.0.0-gcp"
+
+  # example of docker image with helm and gcloud
+  DOCKER_IMAGE: "europe-docker.pkg.dev/xxxxxxxxxxxx/docker-shared-gke-xxxxxxx/helm-gcloud:v2.11.0-v3.1.2-284.0.0-0.3"
+
+
+stages:
+  # define here the stages of the pipeline
+  - build
+  - test
+  - build_docker
+  - deploy_dev
+  - deploy_int
+  - promote_images
+  - deploy_ope
+
+
+# -------- Templates ----- 
+# define here multiple templates that can be used further in the file
+
+#build docker jobs template
+.tpl_build_gcp: &tpl_build_gcp
+  image:
+    name: gcr.io/kaniko-project/executor:v1.6.0-debug
+    entrypoint: [""]
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+
+# example of template running with helm and gcloud before script for a dev enviroment for example
+# some variables like service_account_dev, DEV_SERVICE_ACCOUNT_PATH and some others are defined in gitlab CI/CD variables
+.tpl_dev_before_script: &tpl_dev_before_script
+  image: ${DOCKER_IMAGE}
+  before_script:
+    - mkdir -p /etc/gcp/
+    - echo -n ${service_account_dev} ......
+    - gcloud auth activate-service-account --key-file ${DEV_SERVICE_ACCOUNT_PATH}
+    - gcloud container clusters get-credentials ${GKE_DEV_CLUSTER_NAME} --zone ${GCP_DEV_ZONE} --project ${GCP_DEV_PROJECT}
+    - helm3 repo add cloud-transformation ${ARTIFACTORY_REPO_URL} --username ${ARTIFACTORY_USER} --password ${ARTIFACTORY_APIKEY}
+    - helm3 repo update
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+
+# Branches
+.except_upstream: &except_upstream
+  except:
+    refs:
+      - master
+      - production
+      - integration
+      - develop
+
+.only_upstream: &only_upstream
+  only:
+    refs:
+      - master
+      - production
+      - integration
+      - develop
+
+
+# now define every jobs that will be run on the pipeline, this is an example with differents jobs but you can do what you want
+
+# build the application that will be used also after for the owasp check
+owasp-build:
+  stage: build
+  image: maven:${MAVEN_IMAGE_VERSION}
+  script:
+    - cd api
+    - mvn -s settings.xml -DskipTests clean package
+  artifacts:
+    paths:
+      - "*/target/*.jar"
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+
+# run the tests to see the app ( so the frontend ) coverage ( in this example the frontend is using NODE js and angular )
+coverage_app:
+  image: ${APP_IMAGE_TEST}
+  stage: build
+  before_script:
+    - cd app
+    - npm ci
+  script:
+    - export NODE_OPTIONS="--max-old-space-size=5120"
+    - npm run test:ci # Creates code coverage used by Sonarqube Job
+  artifacts:
+    paths:
+      - "app/coverage/report-lcov/lcov.info"
+      - "app/coverage/report-html/index.html"
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+  allow_failure: true
+
+# run the owasp dependency check to see our vulnerabilities regarding the libraries used into the backend application
+owasp-dependency-check:
+  stage: test
+  image:
+    name: "europe-docker.pkg.dev/xxxxxxxxxxxx/docker-shared-skf-xxxxxxx/docker-dependency-check:latest"
+    entrypoint: [""]
+  needs: ["owasp-build"]
+  script:
+    - /usr/share/dependency-check/bin/dependency-check.sh
+        --proxyserver "$PROXY_GLOBAL_HOST"
+        --proxyport "$PROXY_GLOBAL_PORT"
+        --noupdate
+        --scan "*/target/*.jar"
+        --suppression "/suppression/shared-fp-suppression.xml"
+        --format ALL
+        --project "$CI_PROJECT_NAME"
+    - if [ $(grep -c "vulnerabilities" dependency-check-report.json) -gt 0 ]; then echo -e "\e[31mVulnerabilities Found in the project, please click Browse tab on the right and then press on the dependency-check-report.html\e[31m"; exit2; fi
+  artifacts:
+    when: always
+    name: "$CI_COMMIT_REF_SLUG"
+    paths:
+        - "./dependency-check-report.html"
+        - "./dependency-check-report.json"
+        - "./dependency-check-report.xml"
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+  allow_failure: true
+
+# sonarqube for API
+sonarqube_api:
+  stage: test
+  image: maven:${MAVEN_IMAGE_VERSION}
+  needs: []
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - mvn -f api/ -s api/settings.xml clean install sonar:sonar -Dsonar.projectKey=projectKey-api -Dsonar.qualitygate.wait=true
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+  allow_failure: true
+
+
+# sonarqube for APP
+sonarqube_app:
+  stage: test
+  image:
+      name: ${SONAR_DOCKER_IMAGE}
+      entrypoint: [""]
+  needs: ["coverage_app"]
+  before_script:
+    - cd app
+  script:
+    - sonar-scanner -Dsonar.projectVersion=${CI_COMMIT_SHA} -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.qualitygate.wait=true
+  # <<: *only_app
+  tags:
+    - automation
+    - gcp
+    - gke
+    - k8s
+  allow_failure: true
+
+
+# build docker image for API
+build-push-api:
+ <<: *tpl_build_gcp
+ stage: build_docker
+ script:
+ - set -x
+ - echo ${ARTIFACT_REG_SA_KEY} | base64 -d > /kaniko/config.json
+ - GOOGLE_APPLICATION_CREDENTIALS=/kaniko/config.json /kaniko/executor
+ --context $CI_PROJECT_DIR/api
+ --cache=false
+ --cache-repo ${AR_DOCKER_REGISTRY_DEV}/${AR_DOCKER_IMAGE_PREFIX}-api-cache
+ --build-arg artifactory_username=${ARTIFACTORY_USER}
+ --build-arg artifactory_apikey=${ARTIFACTORY_APIKEY}
+ --dockerfile $CI_PROJECT_DIR/api/Dockerfile
+ --destination ${AR_DOCKER_REGISTRY_DEV}/${AR_DOCKER_IMAGE_PREFIX}-api:${VERSION}
+
+# build docker image for APP
+build-push-app:
+ <<: *tpl_build_gcp
+ stage: build_docker
+ variables:
+ BUILD_TARGET: $CI_COMMIT_REF_NAME
+ script:
+ - echo ${ARTIFACT_REG_SA_KEY} | base64 -d > /kaniko/config.json
+ - export GOOGLE_APPLICATION_CREDENTIALS=/kaniko/config.json
+ - /kaniko/executor
+ --context $CI_PROJECT_DIR/app
+ --cache=false
+ --cache-repo ${AR_DOCKER_REGISTRY_DEV}/${AR_DOCKER_IMAGE_PREFIX}-app-cache
+ --build-arg client_id=${OIDC_CLIENT_ID_DEV}
+ --build-arg BUILD_TARGET=${BUILD_TARGET}
+ --dockerfile $CI_PROJECT_DIR/app/Dockerfile
+ --destination ${AR_DOCKER_REGISTRY_DEV}/${AR_DOCKER_IMAGE_PREFIX}-app:${VERSION}
+ <<: *only_upstream
+
+build-no-push-app:
+ <<: *tpl_build_gcp
+ image: ${APP_IMAGE_BUILD}
+ stage: build_docker
+ before_script:
+ - cd app
+ - npm ci
+ script:
+ - npm run build:develop
+ <<: *except_upstream
+
+# example deploy on dev using the values-dev.yaml helm file ùthat we have to create
+deploy-dev:
+ <<: *tpl_dev_before_script
+ stage: deploy_dev
+ environment:
+ name: dev
+ script:
+ - helm3 upgrade --install 
+ --set apis[0].image.repository=${AR_DOCKER_REGISTRY_DEV}/${AR_DOCKER_IMAGE_PREFIX}-api
+ --set apis[0].image.tag=${VERSION}
+ --set app.image.repository=${AR_DOCKER_REGISTRY_DEV}/${AR_DOCKER_IMAGE_PREFIX}-app
+ --set app.image.tag=${VERSION}
+ --version 0.9.18
+ --history-max 5
+ --set imagePullSecrets[0].name=${RELEASE_NAME}-registry-secret
+ --timeout 1800s
+ --namespace=${DEV_NAMESPACE}
+ -f helm/values-dev.yaml
+ ${RELEASE_NAME} ${CHART_PATH}
+ only:
+ - develop
+
+# rollabck on dev
+rollback-dev:
+ <<: *tpl_dev_before_script
+ stage: deploy_dev
+ script:
+ - helm3 rollback -n ${DEV_NAMESPACE} ${RELEASE_NAME} 0
+ when: manual
+ only:
+ - develop 
+
+# purge on dev
+purge-dev:
+ <<: *tpl_dev_before_script
+ stage: deploy_dev
+ script:
+ - helm3 uninstall -n ${DEV_NAMESPACE} ${RELEASE_NAME}
+ when: manual
+ only:
+ - develop
+ 
+
+# etc etc you can deploy on multiple environment
