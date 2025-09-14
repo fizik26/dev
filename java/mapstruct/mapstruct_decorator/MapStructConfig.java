@@ -1,4 +1,4 @@
-package Java.mapstruct.mapstruct_decorator;
+package java.mapstruct.mapstruct_decorator;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.MapperConfig;

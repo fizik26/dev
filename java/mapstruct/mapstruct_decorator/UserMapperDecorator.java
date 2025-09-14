@@ -1,4 +1,4 @@
-package Java.mapstruct.mapstruct_decorator;
+package java.mapstruct.mapstruct_decorator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

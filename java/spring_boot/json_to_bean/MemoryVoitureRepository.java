@@ -1,4 +1,4 @@
-package Java.json_to_bean;
+package java.spring_boot.json_to_bean;
 
 import org.apache.logging.log4j.spi.StandardLevel;
 import org.springframework.stereotype.Repository;

@@ -1,4 +1,4 @@
-package Java.json_to_bean;
+package java.spring_boot.json_to_bean;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package Java.json_to_bean;
+package java.spring_boot.json_to_bean;
 
 import java.util.List;
 import java.util.Optional;

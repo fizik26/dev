@@ -1,4 +1,4 @@
-package Java.test_architecture_hexagonale;
+package java.test_architecture_hexagonale;
 
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;

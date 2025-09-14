@@ -1,2 +1,2 @@
 Exemple d'un fichier helm pour Kubernetes.
-Pour un serveur DEVs
+Pour un serveur DEV

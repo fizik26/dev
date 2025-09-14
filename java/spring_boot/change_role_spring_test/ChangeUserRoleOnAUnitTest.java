@@ -7,8 +7,6 @@ import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.security.test.context.*;
 
-folder_sans_rapport.changeUserRoleOnAUnitTest.Roles;
-
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
 import java.sql.Connection;
@@ -18,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class changeUserRoleOnAUnitTest {
+public class ChangeUserRoleOnAUnitTest {
     
     private MockMvc mockMvc;
 

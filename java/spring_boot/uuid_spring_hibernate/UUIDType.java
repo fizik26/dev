@@ -1,4 +1,4 @@
-package Java.uuid_spring_hibernate;
+package java.spring_boot.uuid_spring_hibernate;
 
 import org.hibernate.type.AbstractSingleColumnStandardBasicType;
 import org.hibernate.type.descriptor.sql.VarcharTypeDescriptor;
