@@ -1,0 +1,1 @@
+Exemple tests d'architectures avec ArchUnit

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>name</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.13</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <!-- Récupération d'un contrat depuis un jar distant -->
+            <!-- Par défaut, les ressources sont copiées sous ${project.build.directory}/maven-shared-archive-resources -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <configuration>
+                    <resourceBundles>
+                        <!-- groupe:module:version du jar contenant les ressources à récupérer -->
+                        <resourceBundle>fr.repo:project-name:${project-name.version}</resourceBundle>
+                    </resourceBundles>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>LoadOpenApi</id>
+                        <!-- Phase initialize qui précède la phase generate-resources où la
+                           génération des sources est exécutée -->
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Récupération du schéma -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>Generate Controller API</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Retrouvez toutes les possibilités de personnalisation dans la doc : https://github.com/OpenAPITools/openapi-generator/blob/master/modules/openapi-generator-maven-plugin/README.md#general-configuration-parameters -->
+                            <!-- Chemin du contrat OpenAPI -->
+                            <inputSpec>
+                                <!-- exemple depuis un jar distant -->
+                                ${project.build.directory}/maven-shared-archive-resources/myschema-openapi.yml
+
+                                <!-- exemple depuis un fichier dans le projet -->
+                                ${project.build.directory}/src/main/resources/myschema-openapi.yml
+                            </inputSpec>
+                            <generatorName>spring</generatorName>
+                            <!-- Packages de génération -->
+                            <apiPackage>fr.myapp.controller.rest.api</apiPackage>
+                            <modelPackage>fr.myapp.controller.rest.model</modelPackage>
+                            <invokerPackage>fr.myapp.controller.rest.invoker
+                            </invokerPackage>
+                            <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+                            <configOptions>
+                                <sourceFolder>src/gen/main/java</sourceFolder>
+                                <delegatePattern>true</delegatePattern>
+                                <openApiNullable>false</openApiNullable>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useJakartaEe>true</useJakartaEe>
+                                <useTags>true</useTags>
+                                <implicitHeaders>true</implicitHeaders>
+                            </configOptions>
+                            <modelNameSuffix>Resource</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>
